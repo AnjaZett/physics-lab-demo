@@ -1,0 +1,148 @@
+name: CryoLab Surface Electron Measurements
+tables:
+  - name: MEASUREMENTS
+    base_table:
+      database: CRYOLAB
+      schema: SURFACE_ELECTRONS
+      table: MEASUREMENTS
+    dimensions:
+      - name: experiment_id
+        expr: EXPERIMENT_ID
+        description: Unique experiment identifier
+        sample_values: ["EXP-2024-001", "EXP-2025-002"]
+      - name: notes
+        expr: NOTES
+        description: Free-text notes including anomaly flags
+    time_dimensions:
+      - name: timestamp
+        expr: TIMESTAMP
+        description: Measurement timestamp
+        data_type: TIMESTAMP_NTZ
+    measures:
+      - name: temperature_k
+        expr: TEMPERATURE_K
+        description: Sample temperature in Kelvin
+        data_type: FLOAT
+      - name: conductivity_s
+        expr: CONDUCTIVITY_S
+        description: Surface electron conductivity in Siemens
+        data_type: FLOAT
+      - name: mobility_cm2_vs
+        expr: MOBILITY_CM2_VS
+        description: Electron mobility in cm²/(V·s)
+        data_type: FLOAT
+      - name: electron_density_cm2
+        expr: ELECTRON_DENSITY_CM2
+        description: Areal electron density per cm²
+        data_type: FLOAT
+      - name: pressing_field_v_cm
+        expr: PRESSING_FIELD_V_CM
+        description: Pressing electric field in V/cm
+        data_type: FLOAT
+      - name: frequency_ghz
+        expr: FREQUENCY_GHZ
+        description: Microwave probe frequency in GHz
+        data_type: FLOAT
+      - name: signal_amplitude_mv
+        expr: SIGNAL_AMPLITUDE_MV
+        description: Sommer-Tanner signal amplitude in mV
+        data_type: FLOAT
+      - name: phase_deg
+        expr: PHASE_DEG
+        description: Signal phase in degrees
+        data_type: FLOAT
+      - name: helium_level_pct
+        expr: HELIUM_LEVEL_PCT
+        description: Cryostat helium level percentage
+        data_type: FLOAT
+      - name: cryostat_pressure_mbar
+        expr: CRYOSTAT_PRESSURE_MBAR
+        description: Cryostat vacuum pressure in mbar
+        data_type: FLOAT
+      - name: measurement_count
+        expr: COUNT(*)
+        description: Number of measurements
+        data_type: NUMBER
+
+  - name: EXPERIMENTS
+    base_table:
+      database: CRYOLAB
+      schema: SURFACE_ELECTRONS
+      table: EXPERIMENTS
+    dimensions:
+      - name: experiment_id
+        expr: EXPERIMENT_ID
+        description: Unique experiment identifier
+      - name: experiment_name
+        expr: EXPERIMENT_NAME
+        description: Descriptive experiment name
+      - name: substrate_type
+        expr: SUBSTRATE_TYPE
+        description: "Substrate material: He4, Ne, H2, or D2"
+        sample_values: ["He4", "Ne", "H2", "D2"]
+      - name: cryostat
+        expr: CRYOSTAT
+        description: Cryostat system used
+        sample_values: ["BlueFors_LD400", "Oxford_Kelvinox"]
+      - name: researcher
+        expr: RESEARCHER
+        description: Lead researcher name
+        sample_values: ["Dr. M. Weber", "A. Schmidt"]
+      - name: experiment_notes
+        expr: NOTES
+        description: Experiment-level notes and description
+    time_dimensions:
+      - name: start_date
+        expr: START_DATE
+        description: Experiment start date
+        data_type: DATE
+      - name: end_date
+        expr: END_DATE
+        description: Experiment end date
+        data_type: DATE
+    measures:
+      - name: target_temp_k
+        expr: TARGET_TEMP_K
+        description: Target base temperature in Kelvin
+        data_type: FLOAT
+      - name: exp_pressing_field_v_cm
+        expr: PRESSING_FIELD_V_CM
+        description: Experiment pressing field setting in V/cm
+        data_type: FLOAT
+      - name: film_thickness_nm
+        expr: FILM_THICKNESS_NM
+        description: Substrate film thickness in nanometers
+        data_type: FLOAT
+      - name: experiment_count
+        expr: COUNT(*)
+        description: Number of experiments
+        data_type: NUMBER
+
+relationships:
+  - name: experiment_measurements
+    left_table: EXPERIMENTS
+    right_table: MEASUREMENTS
+    join_type: one_to_many
+    relationship_columns:
+      - left_column: EXPERIMENT_ID
+        right_column: EXPERIMENT_ID
+
+verified_queries:
+  - question: "How many experiments were done on each substrate?"
+    sql: |
+      SELECT SUBSTRATE_TYPE, COUNT(*) AS experiment_count
+      FROM CRYOLAB.SURFACE_ELECTRONS.EXPERIMENTS
+      GROUP BY SUBSTRATE_TYPE
+      ORDER BY experiment_count DESC
+  - question: "What is the average mobility for neon substrates?"
+    sql: |
+      SELECT AVG(m.MOBILITY_CM2_VS) AS avg_mobility
+      FROM CRYOLAB.SURFACE_ELECTRONS.MEASUREMENTS m
+      JOIN CRYOLAB.SURFACE_ELECTRONS.EXPERIMENTS e ON m.EXPERIMENT_ID = e.EXPERIMENT_ID
+      WHERE e.SUBSTRATE_TYPE = 'Ne'
+  - question: "Show me all anomalous measurements"
+    sql: |
+      SELECT m.EXPERIMENT_ID, m.TIMESTAMP, m.TEMPERATURE_K, m.CONDUCTIVITY_S, m.MOBILITY_CM2_VS, m.NOTES
+      FROM CRYOLAB.SURFACE_ELECTRONS.MEASUREMENTS m
+      WHERE m.NOTES LIKE '%ANOMALY%'
+      ORDER BY m.TIMESTAMP
