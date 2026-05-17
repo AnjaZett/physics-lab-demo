@@ -27,7 +27,18 @@ COLOR_MAP = {
 }
 
 def create_session():
-    return Session.builder.config("connection_name", CONNECTION_NAME).create()
+    try:
+        secrets = st.secrets["connections"]["snowflake"]
+        return Session.builder.configs({
+            "account": secrets["account"],
+            "user": secrets["user"],
+            "password": secrets["password"],
+            "warehouse": secrets.get("warehouse", "COMPUTE_WH"),
+            "database": secrets.get("database", "CRYOLAB"),
+            "schema": secrets.get("schema", "SURFACE_ELECTRONS"),
+        }).create()
+    except Exception:
+        return Session.builder.config("connection_name", CONNECTION_NAME).create()
 
 if "snowpark_session" not in st.session_state:
     st.session_state.snowpark_session = create_session()
