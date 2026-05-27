@@ -1,7 +1,5 @@
 streamlit>=1.30.0
-pandas
-numpy
+snowflake-snowpark-python[pandas]
 plotly
-snowflake-snowpark-python
-scipy
-matplotlib
+numpy
+cryptography

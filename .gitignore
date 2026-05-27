@@ -1,5 +1,6 @@
 .streamlit/secrets.toml
+svc_streamlit_key.p8
+svc_streamlit_key.pub
 __pycache__/
 *.pyc
 .env
-.DS_Store
