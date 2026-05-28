@@ -167,7 +167,7 @@ Return ONLY valid JSON array. Use scientific notation for small numbers (e.g., 7
 
             extract_result = run_query(f"""
                 SELECT SNOWFLAKE.CORTEX.COMPLETE(
-                    'claude-3-5-sonnet',
+                    'mistral-large2',
                     '{extract_prompt.replace("'", "''")}'
                 ) AS extracted
             """)
@@ -398,7 +398,7 @@ with tab4:
                 try:
                     analyst_result = run_query(f"""
                         SELECT SNOWFLAKE.CORTEX.COMPLETE(
-                            'claude-3-5-sonnet',
+                            'mistral-large2',
                             'You are an expert SQL assistant for a low-temperature physics research database.
                             
 The database CRYOLAB.SURFACE_ELECTRONS has these tables:
@@ -425,7 +425,7 @@ Return ONLY the SQL query, no explanation. Use fully qualified table names.'
 
                         interpretation = run_query(f"""
                             SELECT SNOWFLAKE.CORTEX.COMPLETE(
-                                'claude-3-5-sonnet',
+                                'mistral-large2',
                                 'You are a low-temperature physics research assistant. 
 The user asked: {prompt.replace("'", "''")}
 
@@ -539,7 +539,7 @@ with tab5:
                     
                     ai_result = run_query(f"""
                         SELECT SNOWFLAKE.CORTEX.COMPLETE(
-                            'claude-3-5-sonnet',
+                            'mistral-large2',
                             'You are an expert in low-temperature surface electron physics.
                             
 Analyze this experiment data for anomalies and generate hypotheses.
