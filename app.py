@@ -26,8 +26,8 @@ def inject_custom_css():
     /* Grid-paper background for main content */
     [data-testid="stMain"] {
         background-image: 
-            linear-gradient(rgba(41, 181, 232, 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(41, 181, 232, 0.03) 1px, transparent 1px);
+            linear-gradient(rgba(41, 181, 232, 0.06) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(41, 181, 232, 0.06) 1px, transparent 1px);
         background-size: 40px 40px;
     }
     
@@ -45,22 +45,22 @@ def inject_custom_css():
     /* Thinner dividers */
     hr {
         border: none;
-        border-top: 1px solid rgba(41, 181, 232, 0.2) !important;
+        border-top: 1px solid rgba(41, 181, 232, 0.25) !important;
         margin: 1rem 0;
     }
     
-    /* KPI Card styling */
+    /* KPI Card styling — light theme */
     .kpi-card {
-        background: linear-gradient(135deg, #1B2332 0%, #0E1117 100%);
+        background: #FFFFFF;
         border-radius: 12px;
         padding: 1.2rem 1.5rem;
         border-left: 4px solid;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
         transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
     .kpi-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(41, 181, 232, 0.15);
+        box-shadow: 0 4px 16px rgba(41, 181, 232, 0.12);
     }
     .kpi-value {
         font-family: 'JetBrains Mono', 'Fira Code', monospace;
@@ -72,37 +72,44 @@ def inject_custom_css():
         font-size: 0.8rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        color: #8899AA;
+        color: #5A6B7B;
     }
     .kpi-subtitle {
         font-size: 0.75rem;
-        color: #667788;
+        color: #7A8B9B;
         margin-top: 0.2rem;
     }
     
-    /* Sidebar styling */
+    /* Sidebar styling — light, clearly visible */
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #0a0f1a 0%, #0E1117 100%);
+        background: #F0F4F8;
+        border-right: 1px solid #E2E8F0;
+    }
+    [data-testid="stSidebar"] [data-testid="stMetricValue"] {
+        color: #1B2332;
+    }
+    [data-testid="stSidebar"] [data-testid="stMetricLabel"] {
+        color: #4A5568;
     }
     .sidebar-sparkline {
         margin: 0.5rem 0;
     }
     .status-badge {
         display: inline-block;
-        padding: 0.2rem 0.6rem;
+        padding: 0.25rem 0.7rem;
         border-radius: 12px;
-        font-size: 0.7rem;
+        font-size: 0.72rem;
         font-weight: 600;
         letter-spacing: 0.03em;
     }
-    .status-green { background: rgba(0, 212, 170, 0.15); color: #00D4AA; }
-    .status-yellow { background: rgba(255, 184, 77, 0.15); color: #FFB84D; }
-    .status-red { background: rgba(255, 107, 107, 0.15); color: #FF6B6B; }
+    .status-green { background: rgba(0, 180, 140, 0.12); color: #0B8A6F; }
+    .status-yellow { background: rgba(200, 140, 0, 0.12); color: #9A6700; }
+    .status-red { background: rgba(200, 50, 50, 0.12); color: #C53030; }
     
     /* Anomaly alert banner */
     .anomaly-banner {
-        background: linear-gradient(90deg, rgba(255, 107, 107, 0.08), rgba(255, 184, 77, 0.05));
-        border: 1px solid rgba(255, 107, 107, 0.3);
+        background: linear-gradient(90deg, rgba(220, 50, 50, 0.06), rgba(255, 184, 77, 0.04));
+        border: 1px solid rgba(220, 50, 50, 0.25);
         border-radius: 8px;
         padding: 0.8rem 1.2rem;
         margin-bottom: 1rem;
@@ -119,7 +126,7 @@ def inject_custom_css():
     
     /* OCR History card */
     .ocr-history-item {
-        background: #1B2332;
+        background: #F7FAFC;
         border-radius: 8px;
         padding: 0.8rem 1rem;
         margin-bottom: 0.5rem;
@@ -128,7 +135,7 @@ def inject_custom_css():
     
     /* Button hover glow */
     [data-testid="stButton"] button[kind="primary"]:hover {
-        box-shadow: 0 0 15px rgba(41, 181, 232, 0.3);
+        box-shadow: 0 0 12px rgba(41, 181, 232, 0.25);
     }
     </style>
     """, unsafe_allow_html=True)
@@ -212,8 +219,8 @@ with st.sidebar:
     st.markdown("""
     <div style="text-align:center; padding: 0.5rem 0 1rem 0;">
         <span style="font-size: 2.2rem;">❄️</span>
-        <h2 style="margin: 0.2rem 0 0 0; font-weight: 700; letter-spacing: -0.02em;">CryoLab</h2>
-        <span style="font-size: 0.75rem; color: #8899AA; letter-spacing: 0.05em;">SURFACE ELECTRON RESEARCH</span>
+        <h2 style="margin: 0.2rem 0 0 0; font-weight: 700; letter-spacing: -0.02em; color: #1B2332;">CryoLab</h2>
+        <span style="font-size: 0.75rem; color: #5A6B7B; letter-spacing: 0.05em;">SURFACE ELECTRON RESEARCH</span>
     </div>
     """, unsafe_allow_html=True)
     st.markdown("---")
@@ -246,12 +253,12 @@ with st.sidebar:
             x=sparkline_data["DAY"], y=sparkline_data["CNT"],
             mode="lines", fill="tozeroy",
             line=dict(color="#29B5E8", width=1.5),
-            fillcolor="rgba(41, 181, 232, 0.1)",
+            fillcolor="rgba(41, 181, 232, 0.15)",
         ))
         fig_spark.update_layout(
             height=60, margin=dict(l=0, r=0, t=0, b=0),
             xaxis=dict(visible=False), yaxis=dict(visible=False),
-            template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
+            template="plotly_white", paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="rgba(0,0,0,0)",
         )
         st.plotly_chart(fig_spark, use_container_width=True, config={"displayModeBar": False})
@@ -291,7 +298,7 @@ try:
             <span style="font-size: 1.3rem;">⚠️</span>
             <div>
                 <strong>{anomaly_count} anomalous measurement{'s' if anomaly_count > 1 else ''}</strong> detected in the last 24 hours.
-                <span style="color: #8899AA;">Check the Anomaly Detection tab for details.</span>
+                <span style="color: #5A6B7B;">Check the Anomaly Detection tab for details.</span>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -663,7 +670,7 @@ with tab3:
                 labels={"TEMPERATURE_K": "Temperature (K)", "CONDUCTIVITY_S": "Conductivity (S)"},
                 color_discrete_map={"He4": "#29B5E8", "Ne": "#00D4AA", "H2": "#FF6B6B", "D2": "#FFB84D"},
             )
-            fig1.update_layout(template="plotly_dark", height=450)
+            fig1.update_layout(template="plotly_white", height=450)
             st.plotly_chart(fig1, use_container_width=True)
 
         with chart_col2:
@@ -674,7 +681,7 @@ with tab3:
                 labels={"SUBSTRATE_TYPE": "Substrate", "MOBILITY_CM2_VS": "Mobility (cm²/Vs)"},
                 color_discrete_map={"He4": "#29B5E8", "Ne": "#00D4AA", "H2": "#FF6B6B", "D2": "#FFB84D"},
             )
-            fig2.update_layout(template="plotly_dark", height=450, showlegend=False)
+            fig2.update_layout(template="plotly_white", height=450, showlegend=False)
             st.plotly_chart(fig2, use_container_width=True)
 
         chart_col3, chart_col4 = st.columns(2)
@@ -689,7 +696,7 @@ with tab3:
                 labels={"DATE": "Date", "COUNT": "Measurements"},
                 color_discrete_map={"He4": "#29B5E8", "Ne": "#00D4AA", "H2": "#FF6B6B", "D2": "#FFB84D"},
             )
-            fig3.update_layout(template="plotly_dark", height=400, barmode="stack")
+            fig3.update_layout(template="plotly_white", height=400, barmode="stack")
             st.plotly_chart(fig3, use_container_width=True)
 
         with chart_col4:
@@ -700,7 +707,7 @@ with tab3:
                     he_data, x="TIMESTAMP", y="HELIUM_LEVEL_PCT", color="EXPERIMENT_ID",
                     labels={"TIMESTAMP": "Time", "HELIUM_LEVEL_PCT": "He Level (%)"},
                 )
-                fig4.update_layout(template="plotly_dark", height=400, showlegend=False)
+                fig4.update_layout(template="plotly_white", height=400, showlegend=False)
                 st.plotly_chart(fig4, use_container_width=True)
 
         st.subheader("Mobility vs Temperature (All Substrates)")
@@ -711,7 +718,7 @@ with tab3:
             labels={"TEMPERATURE_K": "Temperature (K)", "MOBILITY_CM2_VS": "Mobility (cm²/Vs)"},
             color_discrete_map={"He4": "#29B5E8", "Ne": "#00D4AA", "H2": "#FF6B6B", "D2": "#FFB84D"},
         )
-        fig5.update_layout(template="plotly_dark", height=500)
+        fig5.update_layout(template="plotly_white", height=500)
         st.plotly_chart(fig5, use_container_width=True)
 
         # ── Experiment Comparison ──
@@ -749,7 +756,7 @@ with tab3:
                 labels={"TIME_OFFSET_H": "Time from start (hours)", compare_y: compare_y},
                 color_discrete_sequence=["#29B5E8", "#00D4AA", "#FF6B6B", "#FFB84D", "#A78BFA"],
             )
-            fig_compare.update_layout(template="plotly_dark", height=450)
+            fig_compare.update_layout(template="plotly_white", height=450)
             st.plotly_chart(fig_compare, use_container_width=True)
 
 
@@ -1061,7 +1068,7 @@ Format as structured markdown.'
                 ))
             
             fig_anom.update_layout(
-                template="plotly_dark", height=500,
+                template="plotly_white", height=500,
                 title=f"{viz_col} over time — {anomaly_exp_id}",
                 yaxis_title=viz_col, xaxis_title="Time",
             )
