@@ -309,12 +309,13 @@ except Exception:
 # ═══════════════════════════════════════════════════════════
 # TABS
 # ═══════════════════════════════════════════════════════════
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📸 Notebook OCR",
     "📝 Data Entry",
     "📊 Analysis & Graphs",
     "💬 Chat with Data",
     "⚠️ Anomaly Detection",
+    "🗄️ Database Explorer",
 ])
 
 
@@ -1077,3 +1078,131 @@ Format as structured markdown.'
                 yaxis_title=viz_col, xaxis_title="Time",
             )
             st.plotly_chart(fig_anom, use_container_width=True)
+
+
+# ═══════════════════════════════════════════════════════════
+# TAB 6: Database Explorer
+# ═══════════════════════════════════════════════════════════
+with tab6:
+    st.header("Database Explorer")
+    st.markdown("Browse, search, and filter all tables in the CryoLab database.")
+
+    # Get all tables in CRYOLAB
+    all_tables = run_query("""
+        SELECT TABLE_SCHEMA, TABLE_NAME, ROW_COUNT, 
+               BYTES / 1024 AS size_kb,
+               LAST_ALTERED
+        FROM CRYOLAB.INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_TYPE = 'BASE TABLE'
+          AND TABLE_SCHEMA NOT IN ('INFORMATION_SCHEMA')
+        ORDER BY TABLE_SCHEMA, TABLE_NAME
+    """)
+
+    if all_tables.empty:
+        st.warning("No tables found.")
+    else:
+        # Table selector
+        col_schema, col_table = st.columns([1, 2])
+        with col_schema:
+            schemas = all_tables["TABLE_SCHEMA"].unique().tolist()
+            selected_schema = st.selectbox("Schema", schemas, key="explorer_schema")
+
+        schema_tables = all_tables[all_tables["TABLE_SCHEMA"] == selected_schema]
+
+        with col_table:
+            table_options = schema_tables.apply(
+                lambda r: f"{r['TABLE_NAME']} ({int(r['ROW_COUNT'] or 0):,} rows)", axis=1
+            ).tolist()
+            selected_table_label = st.selectbox("Table", table_options, key="explorer_table")
+            selected_table = selected_table_label.split(" (")[0]
+
+        # Table info
+        table_info = schema_tables[schema_tables["TABLE_NAME"] == selected_table].iloc[0]
+        info_col1, info_col2, info_col3 = st.columns(3)
+        info_col1.metric("Rows", f"{int(table_info['ROW_COUNT'] or 0):,}")
+        info_col2.metric("Size", f"{table_info['SIZE_KB']:.1f} KB" if table_info['SIZE_KB'] else "—")
+        info_col3.metric("Last Modified", str(table_info['LAST_ALTERED'])[:16] if table_info['LAST_ALTERED'] else "—")
+
+        # Column info
+        with st.expander("📋 Column Schema", expanded=False):
+            columns = run_query(f"""
+                SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT
+                FROM CRYOLAB.INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = '{selected_schema}' AND TABLE_NAME = '{selected_table}'
+                ORDER BY ORDINAL_POSITION
+            """)
+            st.dataframe(columns, use_container_width=True, hide_index=True)
+
+        st.markdown("---")
+
+        # Data preview with filtering
+        st.subheader(f"Data: {selected_schema}.{selected_table}")
+
+        # Get columns for filter
+        table_columns = run_query(f"""
+            SELECT COLUMN_NAME, DATA_TYPE
+            FROM CRYOLAB.INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = '{selected_schema}' AND TABLE_NAME = '{selected_table}'
+            ORDER BY ORDINAL_POSITION
+        """)
+        col_names = table_columns["COLUMN_NAME"].tolist()
+
+        # Filter controls
+        filter_col1, filter_col2, filter_col3 = st.columns([2, 1, 3])
+        with filter_col1:
+            filter_column = st.selectbox("Filter column", ["(none)"] + col_names, key="explorer_filter_col")
+        with filter_col2:
+            filter_op = st.selectbox("Operator", ["=", "!=", ">", "<", ">=", "<=", "LIKE", "IS NULL", "IS NOT NULL"], key="explorer_filter_op")
+        with filter_col3:
+            if filter_op in ("IS NULL", "IS NOT NULL"):
+                filter_value = ""
+            else:
+                filter_value = st.text_input("Value", key="explorer_filter_val", placeholder="Enter filter value...")
+
+        # Search across all text columns
+        search_term = st.text_input("🔍 Full-text search (searches all text columns)", key="explorer_search", placeholder="Type to search...")
+
+        # Build query
+        fqn = f"CRYOLAB.{selected_schema}.{selected_table}"
+        where_clauses = []
+
+        if filter_column != "(none)" and filter_op:
+            if filter_op == "IS NULL":
+                where_clauses.append(f'"{filter_column}" IS NULL')
+            elif filter_op == "IS NOT NULL":
+                where_clauses.append(f'"{filter_column}" IS NOT NULL')
+            elif filter_value:
+                if filter_op == "LIKE":
+                    where_clauses.append(f'"{filter_column}" LIKE \'%{filter_value.replace(chr(39), chr(39)+chr(39))}%\'')
+                else:
+                    where_clauses.append(f'"{filter_column}" {filter_op} \'{filter_value.replace(chr(39), chr(39)+chr(39))}\'')
+
+        if search_term:
+            text_cols = table_columns[table_columns["DATA_TYPE"].isin(["TEXT", "VARCHAR"])]["COLUMN_NAME"].tolist()
+            if text_cols:
+                search_escaped = search_term.replace("'", "''")
+                or_conditions = " OR ".join([f'"{c}" ILIKE \'%{search_escaped}%\'' for c in text_cols])
+                where_clauses.append(f"({or_conditions})")
+
+        where_sql = f" WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+        preview_sql = f'SELECT * FROM {fqn}{where_sql} LIMIT 500'
+
+        try:
+            preview_data = run_query(preview_sql)
+            st.caption(f"Showing {len(preview_data)} row(s) — query: `{fqn}`{' (filtered)' if where_clauses else ''}")
+            st.dataframe(preview_data, use_container_width=True, hide_index=True, height=400)
+
+            # Download filtered data
+            if not preview_data.empty:
+                csv = preview_data.to_csv(index=False).encode("utf-8")
+                st.download_button(
+                    "📥 Download as CSV",
+                    data=csv,
+                    file_name=f"{selected_schema}_{selected_table}_export.csv",
+                    mime="text/csv",
+                    key="explorer_download",
+                )
+        except Exception as e:
+            st.error(f"Query error: {e}")
+            with st.expander("Debug SQL"):
+                st.code(preview_sql, language="sql")
