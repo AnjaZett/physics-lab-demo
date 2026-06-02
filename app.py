@@ -55,12 +55,12 @@ def inject_custom_css():
         border-radius: 12px;
         padding: 1.2rem 1.5rem;
         border-left: 4px solid;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        box-shadow: 0 2px 8px rgba(41, 181, 232, 0.08);
         transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
     .kpi-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(41, 181, 232, 0.12);
+        box-shadow: 0 4px 16px rgba(41, 181, 232, 0.15);
     }
     .kpi-value {
         font-family: 'JetBrains Mono', 'Fira Code', monospace;
@@ -82,8 +82,8 @@ def inject_custom_css():
     
     /* Sidebar styling — light, clearly visible */
     [data-testid="stSidebar"] {
-        background: #F0F4F8;
-        border-right: 1px solid #E2E8F0;
+        background: #E3F2FD;
+        border-right: 1px solid #BBDEFB;
     }
     [data-testid="stSidebar"] [data-testid="stMetricValue"] {
         color: #1B2332;
