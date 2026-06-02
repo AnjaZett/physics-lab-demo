@@ -454,13 +454,17 @@ Return ONLY valid JSON array. Use scientific notation for small numbers (e.g., 7
                         dens = "NULL" if pd.isna(dens) else dens
                         field = "NULL" if pd.isna(field) else field
 
+                        # Parse date in Python to ISO format
+                        try:
+                            parsed_date = pd.to_datetime(str(date_val)).strftime("%Y-%m-%d %H:%M:%S")
+                        except Exception:
+                            parsed_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
                         insert_sql = f"""
                             INSERT INTO CRYOLAB.SURFACE_ELECTRONS.MEASUREMENTS 
                             (EXPERIMENT_ID, TIMESTAMP, TEMPERATURE_K, CONDUCTIVITY_S, 
                              MOBILITY_CM2_VS, ELECTRON_DENSITY_CM2, PRESSING_FIELD_V_CM, NOTES)
-                            VALUES ('{exp_id}', 
-                                    COALESCE(TRY_TO_TIMESTAMP_NTZ('{date_val}'), TRY_TO_TIMESTAMP_NTZ('{date_val}', 'DD MON YYYY'), TRY_TO_TIMESTAMP_NTZ('{date_val}', 'D MON YYYY'), TRY_TO_TIMESTAMP_NTZ('{date_val}', 'MON DD, YYYY'), TRY_TO_TIMESTAMP_NTZ('{date_val}', 'YYYY/MM/DD'), CURRENT_TIMESTAMP()),
-                                    {temp}, {cond}, 
+                            VALUES ('{exp_id}', '{parsed_date}', {temp}, {cond}, 
                                     {mob}, {dens}, {field}, 
                                     '{notes_val}')
                         """
