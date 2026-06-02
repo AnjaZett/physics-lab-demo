@@ -233,13 +233,17 @@ with st.sidebar:
             MIN(m.TIMESTAMP)::DATE as first_date,
             MAX(m.TIMESTAMP)::DATE as last_date
         FROM CRYOLAB.SURFACE_ELECTRONS.EXPERIMENTS e
-        JOIN CRYOLAB.SURFACE_ELECTRONS.MEASUREMENTS m ON e.EXPERIMENT_ID = m.EXPERIMENT_ID
+        LEFT JOIN CRYOLAB.SURFACE_ELECTRONS.MEASUREMENTS m ON e.EXPERIMENT_ID = m.EXPERIMENT_ID
     """)
 
+    n_exp = stats["EXPERIMENTS"].iloc[0] if not stats.empty else 0
+    n_meas = stats["MEASUREMENTS"].iloc[0] if not stats.empty else 0
+    n_sub = stats["SUBSTRATES"].iloc[0] if not stats.empty else 0
+
     col_s1, col_s2 = st.columns(2)
-    col_s1.metric("Experiments", stats["EXPERIMENTS"].iloc[0])
-    col_s2.metric("Substrates", stats["SUBSTRATES"].iloc[0])
-    st.metric("Total Data Points", f"{stats['MEASUREMENTS'].iloc[0]:,}")
+    col_s1.metric("Experiments", n_exp)
+    col_s2.metric("Substrates", n_sub)
+    st.metric("Total Data Points", f"{n_meas:,}")
 
     # Sparkline — last 30 days activity
     sparkline_data = run_query("""
@@ -278,7 +282,10 @@ with st.sidebar:
         st.markdown(f'<span class="status-badge {badge_class}">{badge_text}</span>', unsafe_allow_html=True)
 
     st.markdown("---")
-    st.caption(f"Data: {stats['FIRST_DATE'].iloc[0]} → {stats['LAST_DATE'].iloc[0]}")
+    if not stats.empty and stats["FIRST_DATE"].iloc[0] is not None:
+        st.caption(f"Data: {stats['FIRST_DATE'].iloc[0]} → {stats['LAST_DATE'].iloc[0]}")
+    else:
+        st.caption("No data yet — upload via OCR or Data Entry")
 
 
 # ═══════════════════════════════════════════════════════════
@@ -531,6 +538,10 @@ with tab2:
     st.markdown("Manually enter new measurement data points from ongoing experiments.")
 
     experiments = run_query("SELECT EXPERIMENT_ID, EXPERIMENT_NAME, SUBSTRATE_TYPE FROM CRYOLAB.SURFACE_ELECTRONS.EXPERIMENTS ORDER BY START_DATE DESC")
+
+    if experiments.empty:
+        st.info("No experiments found. Create an experiment first before adding measurements.")
+        st.stop()
 
     col1, col2 = st.columns(2)
     with col1:
@@ -946,9 +957,14 @@ with tab5:
         key="anomaly_method",
     )
 
+    anomaly_exp_labels = run_query("SELECT EXPERIMENT_ID || ' — ' || EXPERIMENT_NAME AS label FROM CRYOLAB.SURFACE_ELECTRONS.EXPERIMENTS ORDER BY START_DATE DESC")
+    if anomaly_exp_labels.empty:
+        st.info("No experiments found. Upload data first.")
+        st.stop()
+
     anomaly_exp = st.selectbox(
         "Experiment",
-        run_query("SELECT EXPERIMENT_ID || ' — ' || EXPERIMENT_NAME AS label FROM CRYOLAB.SURFACE_ELECTRONS.EXPERIMENTS ORDER BY START_DATE DESC")["LABEL"].tolist(),
+        anomaly_exp_labels["LABEL"].tolist(),
         key="anomaly_experiment",
     )
     anomaly_exp_id = anomaly_exp.split(" — ")[0]
