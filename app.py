@@ -451,7 +451,9 @@ Return ONLY valid JSON array. Use scientific notation for small numbers (e.g., 7
                             INSERT INTO CRYOLAB.SURFACE_ELECTRONS.MEASUREMENTS 
                             (EXPERIMENT_ID, TIMESTAMP, TEMPERATURE_K, CONDUCTIVITY_S, 
                              MOBILITY_CM2_VS, ELECTRON_DENSITY_CM2, PRESSING_FIELD_V_CM, NOTES)
-                            VALUES ('{exp_id}', '{date_val}', {temp}, {cond}, 
+                            VALUES ('{exp_id}', 
+                                    COALESCE(TRY_TO_TIMESTAMP_NTZ('{date_val}'), TRY_TO_TIMESTAMP_NTZ('{date_val}', 'DD MON YYYY'), TRY_TO_TIMESTAMP_NTZ('{date_val}', 'D MON YYYY'), TRY_TO_TIMESTAMP_NTZ('{date_val}', 'MON DD, YYYY'), TRY_TO_TIMESTAMP_NTZ('{date_val}', 'YYYY/MM/DD'), CURRENT_TIMESTAMP()),
+                                    {temp}, {cond}, 
                                     {mob}, {dens}, {field}, 
                                     '{notes_val}')
                         """
