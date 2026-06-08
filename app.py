@@ -182,12 +182,25 @@ def create_session():
     return Session.builder.config("connection_name", CONNECTION_NAME).create()
 
 if "snowpark_session" not in st.session_state:
-    st.session_state.snowpark_session = create_session()
+    try:
+        st.session_state.snowpark_session = create_session()
+    except Exception:
+        st.session_state.snowpark_session = None
 
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())[:8]
 
 def get_session():
+    if st.session_state.snowpark_session is None:
+        st.error(
+            "**Snowflake-Verbindung nicht konfiguriert.**\n\n"
+            "Für Streamlit Cloud: Unter 'Manage app' → 'Settings' → 'Secrets' konfigurieren:\n\n"
+            "```toml\n[connections.snowflake]\naccount = \"...\"\nuser = \"SVC_STREAMLIT_CRYOLAB\"\n"
+            "private_key = \"-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----\"\n"
+            "warehouse = \"COMPUTE_WH\"\ndatabase = \"CRYOLAB\"\nschema = \"SURFACE_ELECTRONS\"\n```\n\n"
+            "Für lokal: Connection 'IL16585' in ~/.snowflake/connections.toml konfigurieren."
+        )
+        st.stop()
     return st.session_state.snowpark_session
 
 def run_query(sql):
